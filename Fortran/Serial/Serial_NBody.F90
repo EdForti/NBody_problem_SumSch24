@@ -66,29 +66,19 @@ contains
     close(10)
   end subroutine saveForcesToFile
 
-    subroutine computeMetrics(nBodies, avgTime, throughput, bandwidth)
-    integer, intent(in) :: nBodies
-    real, intent(in) :: avgTime
-    real, intent(out) :: throughput, bandwidth
-
-    throughput = 1.0e-9 * nBodies * nBodies / avgTime
-    bandwidth = 1.0e-9 * 3 * 2 * nBodies * 4 * 6 / avgTime  ! GB/s
-
-  end subroutine computeMetrics
-
 end module nbody_module
 
 program nbody
   use nbody_module
   implicit none
   integer :: nBodies, nIters, i, iter
-  real :: dt, totalTime, avgTime, rate, throughput, bandwidth
+  real :: dt, totalTime, avgTime, rate
   type(Body), allocatable :: p(:)
   real, allocatable :: buf(:), Fx(:), Fy(:), Fz(:)
   real :: tStart, tEnd, tIter
 
-  nBodies = 30000
-  nIters = 500
+  nBodies = 30
+  nIters = 5
   dt = 0.01
 
   allocate(p(nBodies))
@@ -122,19 +112,24 @@ program nbody
         if (iter > 1) then
         tIter = tEnd - tStart
         totalTime = totalTime + tIter
-     end if
-     print *, 'Iteration ', iter, ': ', tIter, ' seconds, Total time: ', totalTime, "seconds"
+        print 100, 'Iteration ', iter, ': ', tIter, ' seconds, Total time: ', totalTime, " seconds"
+        end if
+
+  100 format(A,I5,A,F14.8,A,F14.8,A)
   end do
 
   call saveForcesToFile('forces.txt', nBodies, p, Fx, Fy, Fz)
 
   avgTime = totalTime / real(nIters - 1)
-  call computeMetrics(nBodies, avgTime, throughput, bandwidth)
   rate = real(nBodies) / avgTime
 
-  print *, "Average time for iteration is: ", totalTime/nIters
-  print *, 'Average rate for iterations 2 through ', nIters, ': ', rate, ' steps per second.'
-  print *, nBodies, ' Bodies: average ', 1.0e-9 * nBodies * nBodies / avgTime, ' Billion Interactions / second'
+  print 101, 'Average time for iteration is: ', avgTime, ' sec'
+  print 102, 'Average rate for iterations 2 through ', nIters, ': ', rate, ' steps per second.'
+  print 103, '#Bodies: ',nBodies,', Average ', 1.0e-9 * nBodies * nBodies / avgTime, ' Billion Interactions/second'
+
+  101 format(/,A,F14.8,A)
+  102 format(A,I5,A,F12.2,A)
+  103 format(A,I5,A,F10.6,A,/)
 
   deallocate(p)
   deallocate(Fx)
